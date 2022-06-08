@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from yaml import load
 from load_model import Load_Model
 import rospy
