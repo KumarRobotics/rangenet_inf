@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <node name="rangenet_node" pkg="rangenet_inf" type="infer_node.py" output="screen">
+  </node>
+</launch>

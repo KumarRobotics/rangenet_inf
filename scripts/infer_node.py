@@ -7,10 +7,13 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import time
+import rospkg
 
 class Inference:
     def __init__(self):
-        model_path = rospy.get_param("model_path", default="/media/ian/ResearchSSD/xview_collab/seg_model/")
+        rospack = rospkg.RosPack()
+        base_path = rospack.get_path("rangenet_inf")
+        model_path = rospy.get_param("model_path", default=base_path + "/model") + "/"
 
         self.unproj_n_points = None
         self.full_data = None
