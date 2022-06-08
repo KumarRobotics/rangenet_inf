@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from CRF import CRF
-
+import pathlib
 
 class Segmentator(nn.Module):
     def __init__(self, ARCH, nclasses, path=None, path_append="", strict=False):
@@ -18,7 +18,8 @@ class Segmentator(nn.Module):
         self.strict = False
 
         # get the model
-        bboneModule = imp.load_source("bboneModule", './backbone/darknet.py')
+        cur_dir = pathlib.Path(__file__).parent.resolve()
+        bboneModule = imp.load_source("bboneModule", cur_dir.as_posix() + '/backbone/darknet.py')
         self.backbone = bboneModule.Backbone(params=self.ARCH["backbone"])
 
         # do a pass of the backbone to initialize the skip connections
@@ -32,7 +33,7 @@ class Segmentator(nn.Module):
             self.backbone.cuda()
         _, stub_skips = self.backbone(stub)
 
-        decoderModule = imp.load_source("decoderModule", './decoder/darknet.py')
+        decoderModule = imp.load_source("decoderModule", cur_dir.as_posix() + '/decoder/darknet.py')
         self.decoder = decoderModule.Decoder(params=self.ARCH["decoder"],
                                              stub_skips=stub_skips,
                                              OS=self.ARCH["backbone"]["OS"],
