@@ -7,3 +7,4 @@
 *.svg
 .idea
 __pycache__
+model/*
