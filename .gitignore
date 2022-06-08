@@ -1,0 +1,9 @@
+*.vim
+*.swp
+*.zip
+*.json
+*.png
+*.jpg
+*.svg
+.idea
+__pycache__
