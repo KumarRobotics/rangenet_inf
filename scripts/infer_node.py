@@ -135,7 +135,8 @@ class Inference:
             torch.cuda.synchronize()
             rospy.loginfo(f"inference took: {time.time() - start_t} sec")
             start_t = time.time()
-            proj_argmax = proj_output[0].argmax(dim=0)
+            # subtract 1 so 0 is first index
+            proj_argmax = proj_output[0].argmax(dim=0) - 1
 
             pred_np = proj_argmax.cpu().numpy()
             rospy.loginfo(f"postproc took: {time.time() - start_t} sec")
