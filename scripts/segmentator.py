@@ -19,7 +19,8 @@ class Segmentator(nn.Module):
 
         # get the model
         cur_dir = pathlib.Path(__file__).parent.resolve()
-        bboneModule = imp.load_source("bboneModule", cur_dir.as_posix() + '/backbone/darknet.py')
+        bboneModule = imp.load_source("bboneModule", cur_dir.as_posix() + '/backbone/' + \
+                self.ARCH["backbone"]["name"] + '.py')
         self.backbone = bboneModule.Backbone(params=self.ARCH["backbone"])
 
         # do a pass of the backbone to initialize the skip connections
@@ -33,7 +34,8 @@ class Segmentator(nn.Module):
             self.backbone.cuda()
         _, stub_skips = self.backbone(stub)
 
-        decoderModule = imp.load_source("decoderModule", cur_dir.as_posix() + '/decoder/darknet.py')
+        decoderModule = imp.load_source("decoderModule", cur_dir.as_posix() + '/decoder/' + \
+                self.ARCH["backbone"]["name"] + '.py')
         self.decoder = decoderModule.Decoder(params=self.ARCH["decoder"],
                                              stub_skips=stub_skips,
                                              OS=self.ARCH["backbone"]["OS"],

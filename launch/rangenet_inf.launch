@@ -3,5 +3,6 @@
   <arg name="output" default="screen"/>
   <node name="rangenet_node" pkg="rangenet_inf" type="infer_node.py" output="$(arg output)">
     <param name="~skip_count" value="0"/>
+    <param name="~model_path" value="$(find rangenet_inf)/model"/>
   </node>
 </launch>
