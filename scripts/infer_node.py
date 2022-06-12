@@ -13,7 +13,7 @@ class Inference:
     def __init__(self):
         rospack = rospkg.RosPack()
         base_path = rospack.get_path("rangenet_inf")
-        model_path = rospy.get_param("model_path", default=base_path + "/model") + "/"
+        model_path = rospy.get_param("~model_path", default=base_path + "/model") + "/"
 
         self.unproj_n_points = None
         self.full_data = None
@@ -24,7 +24,7 @@ class Inference:
         self.device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.gpu_ = False
         if torch.cuda.is_available() and torch.cuda.device_count() > 0 and \
-                rospy.get_param("gpu", default=True):
+                rospy.get_param("~gpu", default=True):
             cudnn.benchmark = True
             cudnn.fastest = True
             self.gpu_ = True
