@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <node name="rangenet_node" pkg="rangenet_inf" type="infer_node.py" output="screen">
+  <arg name="output" default="screen"/>
+  <node name="rangenet_node" pkg="rangenet_inf" type="infer_node.py" output="$(arg output)">
+    <param name="~skip_count" value="0"/>
   </node>
 </launch>

@@ -14,6 +14,8 @@ class Inference:
         rospack = rospkg.RosPack()
         base_path = rospack.get_path("rangenet_inf")
         model_path = rospy.get_param("~model_path", default=base_path + "/model") + "/"
+        self.skip_count_ = rospy.get_param("~skip_count", default=0)
+        self.counter_ = 0
 
         self.unproj_n_points = None
         self.full_data = None
@@ -85,6 +87,12 @@ class Inference:
             self.info_ = msg
 
     def scan_cb(self, msg):
+        # handle skipping frames
+        if self.counter_ < self.skip_count_:
+            self.counter_ += 1
+            return
+        self.counter_ = 0
+
         if self.info_ is None:
             rospy.logwarn("Waiting for info message...")
             return
@@ -119,7 +127,8 @@ class Inference:
         rospy.loginfo(f"preproc took: {time.time() - start_t} sec")
 
         with torch.no_grad():
-            # print(proj_range.shape)
+            start_t = time.time()
+
             proj = torch.unsqueeze(proj, 0)
             proj_mask = torch.unsqueeze(proj_mask, 0)
 
@@ -130,15 +139,13 @@ class Inference:
             proj_in = (proj_in - self.means_) * self.stds_
             proj_in = proj_in * proj_mask.float()
 
-            start_t = time.time()
             proj_output = self.model_(proj_in, proj_mask)
-            torch.cuda.synchronize()
-            rospy.loginfo(f"inference took: {time.time() - start_t} sec")
-            start_t = time.time()
-            proj_argmax = proj_output[0].argmax(dim=0)
+            # subtract 1 so 0 is first index
+            proj_argmax = proj_output[0].argmax(dim=0) - 1
 
             pred_np = proj_argmax.cpu().numpy()
-            rospy.loginfo(f"postproc took: {time.time() - start_t} sec")
+
+            rospy.loginfo(f"inference took: {time.time() - start_t} sec")
 
             # publish as point cloud msg, where intensity encodes segmentation results
             start_t = time.time()
