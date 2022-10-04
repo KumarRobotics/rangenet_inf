@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <arg name="output" default="screen"/>
+
+  <arg name="skip_count" default="0"/>
+  <arg name="model_path" default="$(find rangenet_inf)/model"/>
+  <arg name="gpu" default="True"/>
+
   <node name="rangenet_node" pkg="rangenet_inf" type="infer_node.py" output="$(arg output)">
-    <param name="~skip_count" value="0"/>
-    <param name="~model_path" value="$(find rangenet_inf)/model"/>
+    <param name="~skip_count" value="$(arg skip_count)"/>
+    <param name="~model_path" value="$(arg model_path)"/>
+    <param name="~gpu" value="$(arg gpu)"/>
   </node>
 </launch>
