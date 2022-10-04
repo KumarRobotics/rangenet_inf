@@ -94,9 +94,9 @@ class Inference:
         self.counter_ = 0
 
         if self.info_ is None:
-            rospy.logwarn("Waiting for info message...")
+            rospy.logwarn("[RangeNet] Waiting for info message...")
             return
-        rospy.loginfo("=======================")
+        rospy.loginfo("[RangeNet] =======================")
 
         start_t = time.time()
         # store the header in case it get updated before the inference finishes
@@ -124,7 +124,7 @@ class Inference:
                           proj_xyz.permute(2, 0, 1),
                           proj_remission.unsqueeze(0)])
 
-        rospy.loginfo(f"preproc took: {time.time() - start_t} sec")
+        rospy.loginfo(f"[RangeNet] preproc took: {time.time() - start_t} sec")
 
         with torch.no_grad():
             start_t = time.time()
@@ -145,7 +145,7 @@ class Inference:
 
             pred_np = proj_argmax.cpu().numpy()
 
-            rospy.loginfo(f"inference took: {time.time() - start_t} sec")
+            rospy.loginfo(f"[RangeNet] inference took: {time.time() - start_t} sec")
 
             # publish as point cloud msg, where intensity encodes segmentation results
             start_t = time.time()
@@ -160,7 +160,7 @@ class Inference:
             full_data = np.concatenate((points_xyz, pred_np[:, :, None]), axis=2).astype(np.float32)
             pc_msg.data = full_data.tobytes()
             self.pc_pub_.publish(pc_msg)
-            rospy.loginfo(f"pub took: {time.time() - start_t} sec")
+            rospy.loginfo(f"[RangeNet] pub took: {time.time() - start_t} sec")
 
 if __name__ == '__main__':
     rospy.init_node("inference_node")
