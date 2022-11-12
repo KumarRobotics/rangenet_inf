@@ -50,6 +50,7 @@ class Inference:
         self.scan_sub_ = rospy.Subscriber("/os_node/image", Image, callback=self.scan_cb)
         self.info_sub_ = rospy.Subscriber("/os_node/camera_info", CameraInfo, callback=self.info_cb)
         self.pc_pub_ = rospy.Publisher("/os_node/segmented_point_cloud", PointCloud2, queue_size=30)
+        self.sem_image_pub_ = rospy.Publisher("/os_node/sem_image", Image, queue_size=5)
 
     def make_fields(self):
         fields = []
@@ -147,8 +148,23 @@ class Inference:
 
             rospy.loginfo(f"[RangeNet] inference took: {time.time() - start_t} sec")
 
-            # publish as point cloud msg, where intensity encodes segmentation results
             start_t = time.time()
+            # restagger to agree with pano from driver
+            pred_np_stagger = pred_np.copy()
+            for row, shift in enumerate(self.info_.D):
+                pred_np_stagger[row, :] = np.roll(pred_np[row, :], -int(shift), axis=0)
+
+            # publish single channel sem image
+            sem_img_msg = Image()
+            sem_img_msg.header = msg.header
+            sem_img_msg.encoding = "mono8"
+            sem_img_msg.height = pred_np.shape[0]
+            sem_img_msg.width = pred_np.shape[1]
+            sem_img_msg.step = sem_img_msg.width
+            sem_img_msg.data = pred_np_stagger.astype(np.uint8).tobytes()
+            self.sem_image_pub_.publish(sem_img_msg)
+
+            # publish as point cloud msg, where intensity encodes segmentation results
             pc_msg = PointCloud2()
             pc_msg.header = msg.header
             pc_msg.width = points_xyz.shape[0]*points_xyz.shape[1]
