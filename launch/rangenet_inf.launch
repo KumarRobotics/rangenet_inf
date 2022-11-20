@@ -3,12 +3,24 @@
   <arg name="output" default="screen"/>
 
   <arg name="skip_count" default="0"/>
-  <arg name="model_path" default="$(find rangenet_inf)/model"/>
+  <arg name="pano_fov_deg" default="90"/>
+  <arg name="model_path" default="$(find rangenet_inf)/model/pennov_noambient"/>
   <arg name="gpu" default="True"/>
+
+  <arg name="scan_image_topic" default="/os_node/image"/>
+  <arg name="scan_camera_info_topic" default="/os_node/camera_info"/>
+  <arg name="sem_point_cloud_topic" default="/os_node/segmented_point_cloud"/>
+  <arg name="sem_image_topic" default="/os_node/segmented_image"/>
 
   <node name="rangenet_node" pkg="rangenet_inf" type="infer_node.py" output="$(arg output)">
     <param name="~skip_count" value="$(arg skip_count)"/>
+    <param name="~pano_fov_deg" value="$(arg pano_fov_deg)"/>
     <param name="~model_path" value="$(arg model_path)"/>
     <param name="~gpu" value="$(arg gpu)"/>
+
+    <remap from="~scan_image" to="$(arg scan_image_topic)"/>
+    <remap from="~scan_camera_info" to="$(arg scan_camera_info_topic)"/>
+    <remap from="~sem_point_cloud" to="$(arg sem_point_cloud_topic)"/>
+    <remap from="~sem_image" to="$(arg sem_image_topic)"/>
   </node>
 </launch>

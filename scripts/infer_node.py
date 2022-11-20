@@ -15,6 +15,8 @@ class Inference:
         base_path = rospack.get_path("rangenet_inf")
         model_path = rospy.get_param("~model_path", default=base_path + "/model") + "/"
         self.skip_count_ = rospy.get_param("~skip_count", default=0)
+        # only relevant for panoramic inputs
+        self.pano_fov_deg_ = rospy.get_param("~pano_fov_deg", default=90)
         self.counter_ = 0
 
         self.unproj_n_points = None
@@ -40,6 +42,7 @@ class Inference:
             torch.cuda.empty_cache()
 
         self.info_ = None
+        self.intrinsic_proj_ = None
         self.pc_fields_ = self.make_fields()
 
         # get stats
@@ -47,10 +50,10 @@ class Inference:
         self.stds_ = 1 / torch.tensor(self.load_obj_.arch_configs["dataset"]["sensor"]["img_stds"], device=self.device_)[:, None, None]
 
         # subs and pubs
-        self.scan_sub_ = rospy.Subscriber("/os_node/image", Image, callback=self.scan_cb)
-        self.info_sub_ = rospy.Subscriber("/os_node/camera_info", CameraInfo, callback=self.info_cb)
-        self.pc_pub_ = rospy.Publisher("/os_node/segmented_point_cloud", PointCloud2, queue_size=30)
-        self.sem_image_pub_ = rospy.Publisher("/os_node/sem_image", Image, queue_size=5)
+        self.scan_sub_ = rospy.Subscriber("~scan_image", Image, callback=self.scan_cb)
+        self.info_sub_ = rospy.Subscriber("~scan_camera_info", CameraInfo, callback=self.info_cb)
+        self.pc_pub_ = rospy.Publisher("~sem_point_cloud", PointCloud2, queue_size=30)
+        self.sem_image_pub_ = rospy.Publisher("~sem_image", Image, queue_size=5)
 
     def make_fields(self):
         fields = []
@@ -87,6 +90,15 @@ class Inference:
         if self.info_ is None:
             self.info_ = msg
 
+            azis = np.arange(2*np.pi, 0, -np.pi * 2 / msg.width)
+            vfov = np.radians(self.pano_fov_deg_)
+            elevs = np.arange(vfov/2, -vfov/2-0.0001, -vfov / (msg.height - 1))
+            self.intrinsic_proj_ = np.empty((msg.height, msg.width, 3), dtype=np.float32)
+            # x,y,z
+            self.intrinsic_proj_[:,:,0] = np.cos(elevs[:, None]) * np.cos(azis)
+            self.intrinsic_proj_[:,:,1] = np.cos(elevs[:, None]) * np.sin(azis)
+            self.intrinsic_proj_[:,:,2] = np.sin(elevs[:, None])
+
     def scan_cb(self, msg):
         # handle skipping frames
         if self.counter_ < self.skip_count_:
@@ -102,16 +114,24 @@ class Inference:
         start_t = time.time()
         # store the header in case it get updated before the inference finishes
         header = msg.header
-        scan_data = np.frombuffer(msg.data, dtype=np.float32).reshape(self.info_.height, self.info_.width, 4).copy()
-        # destagger
-        for row, shift in enumerate(self.info_.D):
-            scan_data[row, :, :] = np.roll(scan_data[row, :, :], int(shift), axis=0)
+        if msg.header.frame_id == 'odom':
+            # pano
+            scan_data = np.frombuffer(msg.data, dtype=np.uint16).reshape(self.info_.height, self.info_.width, 3).copy()
+            range_intensity = scan_data[:, :, :2].astype(np.float32)
+            range_intensity[:, :, 0] /= self.info_.R[0]
+            points_xyz = range_intensity[:, :, 0, None] * self.intrinsic_proj_
+        else:
+            # sweep
+            scan_data = np.frombuffer(msg.data, dtype=np.float32).reshape(self.info_.height, self.info_.width, 4).copy()
+            # destagger
+            for row, shift in enumerate(self.info_.D):
+                scan_data[row, :, :] = np.roll(scan_data[row, :, :], int(shift), axis=0)
 
-        points_xyz = np.nan_to_num(scan_data[:, :, :3], nan=0.0)
-        range_intensity = np.frombuffer(scan_data[:, :, 3].tobytes(), dtype=np.uint16).reshape(
-                *points_xyz.shape[:2], -1).astype(np.float32)
-        # rescale ranges
-        range_intensity[:, :, 0] /= self.info_.R[0]
+            points_xyz = np.nan_to_num(scan_data[:, :, :3], nan=0.0)
+            range_intensity = np.frombuffer(scan_data[:, :, 3].tobytes(), dtype=np.uint16).reshape(
+                    *points_xyz.shape[:2], -1).astype(np.float32)
+            range_intensity[:, :, 0] /= self.info_.R[0]
+
         mask = points_xyz[:, :, 0] != 0
 
         # prep final points
