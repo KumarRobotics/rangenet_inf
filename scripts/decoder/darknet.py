@@ -46,9 +46,16 @@ class Decoder(nn.Module):
     self.backbone_feature_depth = feature_depth
     self.drop_prob = params["dropout"]
     self.bn_d = params["bn_d"]
+    self.use_lightweight_decoder = params["lightweight_decoder"]
+    if self.use_lightweight_decoder:
+      print("Using the customized smallest model!")
 
     # stride play
-    self.strides = [2, 2, 2, 2, 2]
+    if self.use_lightweight_decoder:
+      self.strides = [2, 2, 2]
+    else:
+      self.strides = [2, 2, 2, 2, 2]
+
     # check current stride
     current_os = 1
     for s in self.strides:
@@ -66,21 +73,33 @@ class Decoder(nn.Module):
     print("Decoder strides: ", self.strides)
 
     # decoder
-    self.dec5 = self._make_dec_layer(BasicBlock,
-                                     [self.backbone_feature_depth, 512],
-                                     bn_d=self.bn_d,
-                                     stride=self.strides[0])
-    self.dec4 = self._make_dec_layer(BasicBlock, [512, 256], bn_d=self.bn_d,
-                                     stride=self.strides[1])
-    self.dec3 = self._make_dec_layer(BasicBlock, [256, 128], bn_d=self.bn_d,
-                                     stride=self.strides[2])
-    self.dec2 = self._make_dec_layer(BasicBlock, [128, 64], bn_d=self.bn_d,
-                                     stride=self.strides[3])
-    self.dec1 = self._make_dec_layer(BasicBlock, [64, 32], bn_d=self.bn_d,
-                                     stride=self.strides[4])
+    if self.use_lightweight_decoder:
+      self.dec3 = self._make_dec_layer(BasicBlock,
+                                      [self.backbone_feature_depth, 128],
+                                      bn_d=self.bn_d,
+                                      stride=self.strides[0])
+      self.dec2 = self._make_dec_layer(BasicBlock, [128, 64], bn_d=self.bn_d,
+                                      stride=self.strides[1])
+      self.dec1 = self._make_dec_layer(BasicBlock, [64, 32], bn_d=self.bn_d,
+                                      stride=self.strides[2])
+      # layer list to execute with skips
+      self.layers = [self.dec3, self.dec2, self.dec1]
 
-    # layer list to execute with skips
-    self.layers = [self.dec5, self.dec4, self.dec3, self.dec2, self.dec1]
+    else:
+      self.dec5 = self._make_dec_layer(BasicBlock,
+                                      [self.backbone_feature_depth, 512],
+                                      bn_d=self.bn_d,
+                                      stride=self.strides[0])
+      self.dec4 = self._make_dec_layer(BasicBlock, [512, 256], bn_d=self.bn_d,
+                                      stride=self.strides[1])
+      self.dec3 = self._make_dec_layer(BasicBlock, [256, 128], bn_d=self.bn_d,
+                                      stride=self.strides[2])
+      self.dec2 = self._make_dec_layer(BasicBlock, [128, 64], bn_d=self.bn_d,
+                                      stride=self.strides[3])
+      self.dec1 = self._make_dec_layer(BasicBlock, [64, 32], bn_d=self.bn_d,
+                                      stride=self.strides[4])
+      # layer list to execute with skips
+      self.layers = [self.dec5, self.dec4, self.dec3, self.dec2, self.dec1]
 
     # for a bit of fun
     self.dropout = nn.Dropout2d(self.drop_prob)
@@ -119,8 +138,9 @@ class Decoder(nn.Module):
     os = self.backbone_OS
 
     # run layers
-    x, skips, os = self.run_layer(x, self.dec5, skips, os)
-    x, skips, os = self.run_layer(x, self.dec4, skips, os)
+    if self.use_lightweight_decoder == False:
+      x, skips, os = self.run_layer(x, self.dec5, skips, os)
+      x, skips, os = self.run_layer(x, self.dec4, skips, os)
     x, skips, os = self.run_layer(x, self.dec3, skips, os)
     x, skips, os = self.run_layer(x, self.dec2, skips, os)
     x, skips, os = self.run_layer(x, self.dec1, skips, os)
