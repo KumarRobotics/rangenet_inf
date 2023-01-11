@@ -50,8 +50,8 @@ class Inference:
         self.stds_ = 1 / torch.tensor(self.load_obj_.arch_configs["dataset"]["sensor"]["img_stds"], device=self.device_)[:, None, None]
 
         # subs and pubs
-        self.scan_sub_ = rospy.Subscriber("~scan_image", Image, callback=self.scan_cb)
-        self.info_sub_ = rospy.Subscriber("~scan_camera_info", CameraInfo, callback=self.info_cb)
+        self.scan_sub_ = rospy.Subscriber("~scan_image", Image, callback=self.scan_cb, queue_size=1)
+        self.info_sub_ = rospy.Subscriber("~scan_camera_info", CameraInfo, callback=self.info_cb, queue_size=1)
         self.pc_pub_ = rospy.Publisher("~sem_point_cloud", PointCloud2, queue_size=30)
         self.sem_image_pub_ = rospy.Publisher("~sem_image", Image, queue_size=5)
 
@@ -120,6 +120,14 @@ class Inference:
             range_intensity = scan_data[:, :, :2].astype(np.float32)
             range_intensity[:, :, 0] /= self.info_.R[0]
             points_xyz = range_intensity[:, :, 0, None] * self.intrinsic_proj_
+
+            vec1 = np.roll(points_xyz, 1, axis=0) - points_xyz
+            vec2 = np.roll(points_xyz, 1, axis=1) - points_xyz
+            normals = np.cross(vec1, vec2)
+            normal_norms = np.linalg.norm(normals, axis=2)
+
+            nonzero = (normal_norms > 0)
+            normals[nonzero, :] /= normal_norms[nonzero][:, None]
         else:
             # sweep
             scan_data = np.frombuffer(msg.data, dtype=np.float32).reshape(self.info_.height, self.info_.width, 4).copy()
@@ -136,7 +144,7 @@ class Inference:
 
         # prep final points
         proj_range = torch.from_numpy(range_intensity[:, :, 0])
-        proj_xyz = torch.from_numpy(points_xyz)
+        proj_xyz = torch.from_numpy(normals)
         proj_remission = torch.from_numpy(range_intensity[:, :, 1])
         proj_mask = torch.from_numpy(mask)
         proj_labels = []
