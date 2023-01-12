@@ -4,11 +4,11 @@
 
   <arg name="skip_count" default="0"/>
   <arg name="pano_fov_deg" default="90"/>
-  <arg name="model_path" default="$(find rangenet_inf)/model/pennov_noambient"/>
+  <arg name="model_path" default="$(find rangenet_inf)/model/pano_devel"/>
   <arg name="gpu" default="True"/>
 
-  <arg name="scan_image_topic" default="/os_node/image"/>
-  <arg name="scan_camera_info_topic" default="/os_node/camera_info"/>
+  <arg name="scan_image_topic" default="/os_node/rofl_odom/pano/img"/>
+  <arg name="scan_camera_info_topic" default="/os_node/rofl_odom/pano/camera_info"/>
   <arg name="sem_point_cloud_topic" default="/os_node/segmented_point_cloud"/>
   <arg name="sem_image_topic" default="/os_node/segmented_image"/>
 
