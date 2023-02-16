@@ -126,13 +126,13 @@ class Inference:
         header = msg.header
         if msg.header.frame_id == 'odom':
             # pano
-            scan_data = np.frombuffer(msg.data, dtype=np.uint16).reshape(self.info_.height, self.info_.width, 3).copy()
+            scan_data = np.frombuffer(msg.data, dtype=np.uint16).reshape(self.info_.height, self.info_.width, -1).copy()
             range_intensity = scan_data[:, :, :2].astype(np.float32)
             range_intensity[:, :, 0] /= self.info_.R[0]
             points_xyz = range_intensity[:, :, 0, None] * self.intrinsic_proj_
         else:
             # sweep
-            scan_data = np.frombuffer(msg.data, dtype=np.float32).reshape(self.info_.height, self.info_.width, 4).copy()
+            scan_data = np.frombuffer(msg.data, dtype=np.float32).reshape(self.info_.height, self.info_.width, -1).copy()
             # destagger
             for row, shift in enumerate(self.info_.D):
                 scan_data[row, :, :] = np.roll(scan_data[row, :, :], int(shift), axis=0)
