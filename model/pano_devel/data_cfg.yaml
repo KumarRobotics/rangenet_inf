@@ -1,0 +1,147 @@
+# This file is covered by the LICENSE file in the root of this project.
+name: "pennovation-jackle"
+
+# Ian's label tool convention:
+# rgb / 255
+# - unlabelled: [0, 0, 0]
+# - road: [0, 0, 1]
+# - vegetation: [0, 1, 0]
+# - building: [1, 0, 0]
+# - grass/sidewalk: [0, 0.4, 0]
+# - vehicle: [0, 1, 1]
+# - human: [1, 0, 1]
+# - gravel: [0, 0.5, 0.5]
+# - tree_trunk: [0.5, 0.2, 0.2]
+# - light_pole: [1, 0.5, 0]
+
+labels: 
+  0 : "unlabelled"
+  1 : "road"
+  2: "vegetation"
+  3: "building"
+  4: "grass-sidewalk"
+  5: "vehicle"
+  6: "human"
+  7: "gravel"
+  8: "tree_trunk"
+  9: "light_pole"
+
+color_map: # bgr
+  0 : [0, 0, 0]
+  1 : [255, 0, 0]
+  2: [0, 255, 0]
+  3: [0, 0, 255]
+  4: [0, 102, 0]
+  5: [255, 255, 0]
+  6: [255, 0, 255]
+  7: [127.5, 127.5, 0]
+  8: [51, 51, 127.5]
+  9: [0, 127.5, 255]
+
+content: # as a ratio with the total number of points
+  # raw stats from the data loader:
+
+  # Pennovation only (before June 17, 2022)
+  #mean values of number points for each class / total points are:
+  #[0.1851279  0.44469167 0.07906675 0.20659639 0.04173904 0.03609916
+  # 0.00286886 0.00381022 0.         0.        ]
+
+  # Pennovation + WP (since June 17, 2022)
+  #  mean values of number points for each class / total points are:
+#  [ 0.2364372  0.26481532 0.17107211 0.10536941 0.17030154 0.01278725
+#    0.00235424 0.03686293 0.         0. ]
+
+# WP only (since June 21, 2022)
+# 2.335446225620497473e-01
+# 1.806322296420291296e-01
+# 2.250913845636967614e-01
+# 5.661550932634467487e-02
+# 2.204802930656409865e-01
+# 7.650730221770530443e-03
+# 1.515269882155862976e-03
+# 7.446996073631233226e-02
+# 0.000000000000000000e+00
+# 0.000000000000000000e+00
+
+# Oct 17, 2022
+# 0.1929972
+# 0.3896135
+# 0.1297902
+# 0.1573477
+# 0.0978754
+# 0.0266921
+# 0.0031597
+# 0.0025242
+# 0.0000000
+# 0.0000000
+
+#no ambient
+  0: 0.58977436  #  0 : "unlabelled"
+  1: 0.14888666  #  1 : "road"
+  2: 0.1063175   #  2: "vegetation"
+  3: 0.04309046  #  3: "building"
+  4: 0.06981749  #  4: "grass-sidewalk
+  5: 0.01891934  #  5: "vehicle"
+  6: 0.00211804  #  6: "human"
+  7: 0.02107615  #  7: "gravel"
+  8: 0.          #  8: "tree_trunk"
+  9: 0.          #  9: "light_pole"
+
+#ambient
+#  0: 0.57061269  #  0 : "unlabelled"
+#  1: 0.13179147  #  1 : "road"
+#  2: 0.12376589  #  2: "vegetation"
+#  3: 0.03589451  #  3: "building"
+#  4: 0.09511048  #  4: "grass-sidewalk
+#  5: 0.00581696  #  5: "vehicle"
+#  6: 0.00273273  #  6: "human"
+#  7: 0.03427527  #  7: "gravel"
+#  8: 0.          #  8: "tree_trunk"
+#  9: 0.          #  9: "light_pole"
+
+# classes that are indistinguishable from single scan or inconsistent in
+# ground truth are mapped to their closest equivalent
+# for pennovation dataset, all classes are distinguishable and thus not mapped
+learning_map:
+  0 : 0
+  1 : 1
+  2 : 2
+  3 : 3
+  4 : 4
+  5 : 5
+  6 : 6
+  7 : 7
+  8 : 8
+  9 : 9
+
+learning_map_inv: # inverse of previous map
+  0 : 0
+  1 : 1
+  2 : 2
+  3 : 3
+  4 : 4
+  5 : 5
+  6 : 6
+  7 : 7
+  8 : 8
+  9 : 9
+
+learning_ignore: # Ignore classes
+  0: True      
+  1: False    
+  2: False     
+  3: False    
+  4: False     
+  5: False     
+  6: False
+  7: False    
+  8: True   
+  9: True   
+
+split: # sequence numbers
+  train:
+    - 0
+  valid:
+    - 1
+  test:
+    - 2
