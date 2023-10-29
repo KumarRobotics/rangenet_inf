@@ -1,1 +1,2 @@
-Modified from the [sloam](https://github.com/XuRobotics/generic-sloam) repo, which itself is based on [RangeNet++](https://github.com/PRBonn/lidar-bonnetal).
+Modified from [RangeNet++](https://github.com/PRBonn/lidar-bonnetal).
+Thank you to [Xu Liu](https://github.com/XuRobotics) for his contributions.
